@@ -30,19 +30,44 @@ public class ExchangeRateWrapper {
     // This is an ID you will generate to uniquely identify the exchange rate record
     // This does not come from the API response
     // public String externalId; baseCurrency + '_' + targetCurrency
-    
+    public String base_code;
+    public String time_last_update_unix;
+    public Map<String, Decimal> conversion_rates; 
+    public String externalId;
+        
     /**
      * @description Converts the wrapper data to a list of Exchange_Rate__c records
      * @return List<Exchange_Rate__c> The list of exchange rate records
      */
-    public List<Exchange_Rate__c> toExchangeRates() {
+    public List<Exchange_Rate__c> toExchangeRates(ExchangeRateWrapper exchangeRateData) {
         // TODO: Implement the method to convert the wrapper data to Exchange_Rate__c records
         // 1. Create a list to hold the Exchange_Rate__c records
+        List<Exchange_Rate__c> exchangeRates = new List<Exchange_Rate__c>();
+
         // 2. Iterate through the rates map
+        for(String currencyCode : exchangeRateData.conversion_rates.keySet()){
+            Exchange_Rate__c exchangeRate = new Exchange_Rate__c();
+            exchangeRate.Name = exchangeRateData.base_code + '=>' + currencyCode;
+            exchangeRate.Base_Currency__c = exchangeRateData.base_code;
+            exchangeRate.Target_Currency__c = currencyCode;
+            exchangeRate.Rate__c = exchangeRateData.conversion_rates.get(currencyCode);
+            exchangeRate.External_Id__c =  exchangeRateData.base_code + '_' + currencyCode;
+
+            exchangeRate.Last_Updated__c = ExchangeRateWrapper.convertDateTime(exchangeRateData.time_last_update_unix);
+
+            exchangeRates.add(exchangeRate);
+        }
         // 3. For each rate, create an Exchange_Rate__c record
+        try{
+            upsert exchangeRates External_Id__c;
+            System.debug('Exchange Rate Debug: ' + exchangeRates[0]);
+        } catch(DMLException e){
+            System.debug('An error has occurred upon insert of exchangeRates: ' + e.getMessage());
+        }
+        
         // 4. Return the list of records
         
-        return null; // Replace with actual implementation
+        return exchangeRates; // Replace with actual implementation
     }
     
     /**
@@ -53,7 +78,18 @@ public class ExchangeRateWrapper {
     public static ExchangeRateWrapper parse(String jsonResponse) {
         // TODO: Implement the method to parse the JSON response
         // Use JSON.deserialize or JSON.deserializeStrict to parse the response
+        ExchangeRateWrapper exchangeRateData = (ExchangeRateWrapper) JSON.deserialize(jsonResponse, ExchangeRateWrapper.class);
+        return exchangeRateData;
+    }
+
+    public static dateTime convertDateTime(String originalDate){
+        Datetime convertedDatetime = null;
+        Long unixTimestamp = Long.valueOf(originalDate);
+        Long milliseconds = unixTimestamp * 1000;
+
+        //Convert milliseconds to datetime
+        convertedDatetime = Datetime.newInstance(milliseconds);
         
-        return null; // Replace with actual implementation
+        return convertedDatetime;
     }
 }

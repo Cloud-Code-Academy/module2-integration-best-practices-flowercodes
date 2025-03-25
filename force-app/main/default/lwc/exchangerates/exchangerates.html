@@ -1,0 +1,28 @@
+<template>
+    <template if:true={error}>
+        <p>Error loading data: {error}</p>
+    </template>
+
+    <template if:true={data}>
+        <lightning-input
+            type = "text"
+            label = "Search Base Currency"
+            onchange={handleBaseCurrencySearch}>
+        </lightning-input>
+
+        <lightning-input
+            type = "text"
+            label = "Search Target Currency"
+            onchange={handleTargetCurrencySearch}>
+        </lightning-input>
+
+        <div style="height: 300px;">
+            <lightning-datatable
+                key-field="Id"
+                data={filteredData}
+                columns={columns}
+                hide-checkbox-column = "true">
+            </lightning-datatable>
+        </div>
+    </template>
+</template>
